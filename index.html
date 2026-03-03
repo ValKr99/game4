@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сортування кредитних документів</title>
+    <style>
+        :root {
+            --primary-color: #008542; /* Зелений */
+            --secondary-color: #FFD600; /* Жовтий */
+            --text-color: #333333;
+            --bg-color: #F4F7F6;
+            --folder-bg: #ffffff;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        /* Екрани */
+        #start-screen, #game-screen, #end-screen {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        #start-screen.active, #game-screen.active, #end-screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Заголовки та текст */
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        /* Кнопки */
+        .btn {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 133, 66, 0.3);
+            margin-top: 15px;
+        }
+
+        .btn:hover {
+            background-color: #006633;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 133, 66, 0.4);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: #333;
+            box-shadow: 0 4px 6px rgba(255, 214, 0, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background-color: #e6c200;
+            box-shadow: 0 6px 12px rgba(255, 214, 0, 0.4);
+        }
+
+        /* Ігровий екран */
+        .timer-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .timer-icon {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+
+        .document-display {
+            background-color: var(--bg-color);
+            border-left: 5px solid var(--secondary-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .folders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .folder-btn {
+            background-color: var(--folder-bg);
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .folder-btn:hover, .folder-btn:active {
+            border-color: var(--primary-color);
+            background-color: #f0faf4;
+            transform: scale(1.02);
+        }
+
+        .folder-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .folder-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .folder-desc {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.2;
+        }
+
+        /* Екран результатів */
+        .result-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            margin: 0 auto 20px;
+        }
+
+        .result-success { background-color: var(--success-color); }
+        .result-fail { background-color: var(--danger-color); }
+
+        .analysis-container {
+            text-align: left;
+            margin-top: 30px;
+            max-height: 400px;
+            overflow-y: auto;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+        }
+
+        .analysis-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #ccc;
+        }
+
+        .analysis-item.correct { border-left-color: var(--success-color); }
+        .analysis-item.incorrect { border-left-color: var(--danger-color); }
+
+        .doc-name { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .doc-feedback { font-size: 13px; display: flex; flex-direction: column; gap: 4px;}
+        .correct-text { color: var(--success-color); font-weight: bold; }
+        .incorrect-text { color: var(--danger-color); font-weight: bold; }
+
+        /* Адаптивність */
+        @media (max-width: 600px) {
+            .folders-grid { grid-template-columns: repeat(2, 1fr); }
+            /* Останню папку робимо на всю ширину на мобільному, щоб сітка виглядала рівно */
+            .folder-btn:last-child { grid-column: span 2; }
+            h1 { font-size: 20px; }
+            .document-display { font-size: 16px; padding: 15px; }
+            .container { padding: 20px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="start-screen" class="active">
+            <h1>👋 Вітаємо у тренажері з сортування документів!</h1>
+            <p>Ваше завдання — правильно розподілити кредитні документи по відповідних папках справи.</p>
+            <div style="background-color: #fffde7; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px dashed var(--secondary-color);">
+                <strong>📋 Правила:</strong>
+                <ul style="text-align: left; margin-top: 10px; padding-left: 20px; font-size: 14px;">
+                    <li>На екрані з'являтиметься назва документу.</li>
+                    <li>Натисніть на папку (від I до V), до якої належить цей документ.</li>
+                    <li>Час на виконання завдання: <strong>6 хвилин</strong>.</li>
+                    <li>Мінімальний прохідний бал: <strong>80%</strong>.</li>
+                </ul>
+            </div>
+            <button class="btn" onclick="startGame()">Розпочати тестування 🚀</button>
+        </div>
+
+        <div id="game-screen">
+            <div class="timer-container">
+                <span class="timer-icon">⏱️</span>
+                <span id="timer">06:00</span>
+            </div>
+            
+            <p style="color: #666; font-size: 14px; margin-bottom: 10px;">Куди бажаєте розподілити цей документ?</p>
+            <div class="document-display" id="current-document">
+                Завантаження документу...
+            </div>
+
+            <div class="folders-grid">
+                <button class="folder-btn" onclick="selectFolder('I')">
+                    <div class="folder-icon">📁</div>
+                    <div class="folder-title">Папка I</div>
+                    <div class="folder-desc">Реєстраційні документи</div>
+                </button>
+                <button class="folder-btn" onclick="selectFolder('II')">
+                    <div class="folder-icon">📁</div>
+                    <div class="folder-title">Папка II</div>
+                    <div class="folder-desc">Прийняття рішення</div>
+                </button>
+                <button class="folder-btn" onclick="selectFolder('III')">
+                    <div class="folder-icon">📁</div>
+                    <div class="folder-title">Папка III</div>
+                    <div class="folder-desc">Застава / Іпотека</div>
+                </button>
+                <button class="folder-btn" onclick="selectFolder('IV')">
+                    <div class="folder-icon">📁</div>
+                    <div class="folder-title">Папка IV</div>
+                    <div class="folder-desc">Моніторинг кредиту</div>
+                </button>
+                <button class="folder-btn" onclick="selectFolder('V')">
+                    <div class="folder-icon">📁</div>
+                    <div class="folder-title">Папка V</div>
+                    <div class="folder-desc">Інші документи</div>
+                </button>
+            </div>
+        </div>
+
+        <div id="end-screen">
+            <h1 id="result-title">Результати тестування</h1>
+            <div id="result-circle" class="result-circle">
+                0%
+            </div>
+            <p id="result-message" style="font-weight: bold; font-size: 18px;"></p>
+            
+            <button id="retry-btn" class="btn btn-secondary" style="display: none;" onclick="resetGame()">🔄 Спробувати ще раз</button>
+
+            <div class="analysis-container" id="analysis-list">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // БАЗА ДАНИХ ДОКУМЕНТІВ
+        const rawDocuments = [
+            // Папка I
+            { text: "Копія паспорту Позичальника/Поручителя", folder: "I", folderName: "I. Реєстраційні документи Позичальника/Поручителя" },
+            { text: "Копія документу з реєстраційним номером облікової картки в Державному реєстрі фізичних осіб – платників податків Позичальника/Поручителя", folder: "I", folderName: "I. Реєстраційні документи Позичальника/Поручителя" },
+            
+            // Папка II
+            { text: "Кредитна заявка Позичальника/Поручителя", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "Паспорт споживчого кредиту", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "Довідка з постійного місця роботи Позичальника/ Поручителя", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "Документи, що підтверджують інші доходи Позичальника/Поручителя", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "Довідка про наявність (розмір) кредитної заборгованості перед іншими банками", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "Документи, що підтверджують доходи членів сім`ї", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "Копія свідоцтва про одруження/про шлюб (про розірвання шлюбу)", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "Копія свідоцтва про народження дитини", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "Роздруковані сканкопії або оригінали (за наявності) висновків служб, які задіяні в розгляді питання про можливість прийняття рішення щодо видачі кредиту", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "Довідки з Бюро кредитних історій по позичальнику", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "Копія або витяг рішення уповноваженого колегіального органу щодо надання кредиту", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "Кредитний договір", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "Договір поруки", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            { text: "У випадку наявності – інші документи (прийняття рішення)", folder: "II", folderName: "II. Документація про прийняття рішення щодо надання кредиту" },
+            
+            // Папка III
+            { text: "Копія паспорту Майнового поручителя", folder: "III", folderName: "III. Документи щодо застави/іпотеки" },
+            { text: "Копія документу з реєстраційним номером облікової картки в Державному реєстрі фізичних осіб – платників податків (Майнового поручителя)", folder: "III", folderName: "III. Документи щодо застави/іпотеки" },
+            { text: "Кредитна заявка Майнового поручителя", folder: "III", folderName: "III. Документи щодо застави/іпотеки" },
+            { text: "Договір забезпечення", folder: "III", folderName: "III. Документи щодо застави/іпотеки" },
+            { text: "Договір страхування", folder: "III", folderName: "III. Документи щодо застави/іпотеки" },
+            { text: "Згода чоловіка (дружини) заставодавця на передачу майна в заставу", folder: "III", folderName: "III. Документи щодо застави/іпотеки" },
+            { text: "Довідка про склад сім'ї або зареєстрованих у житловому приміщенні/будинку осіб", folder: "III", folderName: "III. Документи щодо застави/іпотеки" },
+            { text: "Документ про оцінку майна, яке пропонується в заставу", folder: "III", folderName: "III. Документи щодо застави/іпотеки" },
+            { text: "Рішення про згоду органів опіки та піклування", folder: "III", folderName: "III. Документи щодо застави/іпотеки" },
+            { text: "Документи, що підтверджують право власності на майно позичальника або майнового поручителя", folder: "III", folderName: "III. Документи щодо застави/іпотеки" },
+            { text: "Інші документи (застава/іпотека)", folder: "III", folderName: "III. Документи щодо застави/іпотеки" },
+            
+            // Папка IV
+            { text: "Документи щодо контролю за станом заставленого майна", folder: "IV", folderName: "IV. Документація щодо моніторингу, супроводження кредиту" },
+            { text: "Документи, що підтверджують цільове використання коштів", folder: "IV", folderName: "IV. Документація щодо моніторингу, супроводження кредиту" },
+            { text: "Документи щодо оцінки фінансового стану", folder: "IV", folderName: "IV. Документація щодо моніторингу, супроводження кредиту" },
+            { text: "Інші документи, що стосуються: обслуговування боргу, нарахування процентів, перенесення суми заборгованості, визнання безнадійною тощо", folder: "IV", folderName: "IV. Документація щодо моніторингу, супроводження кредиту" },
+            { text: "Документи про вжиті банком заходи для погашення боргу (повернення або стягнення боргу)", folder: "IV", folderName: "IV. Документація щодо моніторингу, супроводження кредиту" },
+            
+            // Папка V
+            { text: "Інші документи, що стосуються кредитного процесу (документи по реструктуризації кредиту; службові записки, тощо)", folder: "V", folderName: "V. Інші документи, що стосуються кредитного процесу" }
+        ];
+
+        // Змінні стану гри
+        let gameDocuments = [];
+        let currentDocIndex = 0;
+        let userAnswers = [];
+        let totalTime = 6 * 60; // 6 хвилин в секундах
+        let timeLeft = totalTime;
+        let timerInterval;
+
+        // Функція перемішування масиву (алгоритм Фішера-Єтса)
+        function shuffleArray(array) {
+            let shuffled = array.slice();
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Форматування часу
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        // Перемикання екранів
+        function showScreen(screenId) {
+            document.getElementById('start-screen').classList.remove('active');
+            document.getElementById('game-screen').classList.remove('active');
+            document.getElementById('end-screen').classList.remove('active');
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Старт гри
+        function startGame() {
+            gameDocuments = shuffleArray(rawDocuments);
+            currentDocIndex = 0;
+            userAnswers = [];
+            timeLeft = totalTime;
+            
+            document.getElementById('timer').innerText = formatTime(timeLeft);
+            
+            showScreen('game-screen');
+            loadDocument();
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = formatTime(timeLeft);
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame("Час вичерпано!");
+                }
+            }, 1000);
+        }
+
+        // Завантаження поточного документу на екран
+        function loadDocument() {
+            if (currentDocIndex >= gameDocuments.length) {
+                endGame("Всі документи відсортовано!");
+                return;
+            }
+            const doc = gameDocuments[currentDocIndex];
+            document.getElementById('current-document').innerText = doc.text;
+        }
+
+        // Обробка кліку по папці
+        function selectFolder(folderId) {
+            const doc = gameDocuments[currentDocIndex];
+            const isCorrect = (doc.folder === folderId);
+            
+            userAnswers.push({
+                document: doc.text,
+                selectedFolder: folderId,
+                correctFolder: doc.folder,
+                correctFolderName: doc.folderName,
+                isCorrect: isCorrect
+            });
+            
+            currentDocIndex++;
+            loadDocument();
+        }
+
+        // Завершення гри та підрахунок
+        function endGame(reasonText) {
+            clearInterval(timerInterval);
+            showScreen('end-screen');
+            
+            const totalAnswered = userAnswers.length;
+            const correctAnswers = userAnswers.filter(ans => ans.isCorrect).length;
+            
+            // Якщо не відповів ні на що
+            let percentage = 0;
+            if (totalAnswered > 0) {
+                percentage = Math.round((correctAnswers / rawDocuments.length) * 100);
+            }
+
+            const isPassed = percentage >= 80;
+            
+            const resultCircle = document.getElementById('result-circle');
+            resultCircle.innerText = `${percentage}%`;
+            
+            if (isPassed) {
+                resultCircle.className = 'result-circle result-success';
+                document.getElementById('result-message').innerText = `Вітаємо! Тест складено успішно. (${reasonText})`;
+                document.getElementById('result-message').style.color = 'var(--success-color)';
+                document.getElementById('retry-btn').style.display = 'none';
+            } else {
+                resultCircle.className = 'result-circle result-fail';
+                document.getElementById('result-message').innerText = `Тест не складено. Необхідно набрати мінімум 80%. (${reasonText})`;
+                document.getElementById('result-message').style.color = 'var(--danger-color)';
+                document.getElementById('retry-btn').style.display = 'inline-block';
+            }
+
+            renderAnalysis();
+        }
+
+        // Вивід аналізу помилок
+        function renderAnalysis() {
+            const listContainer = document.getElementById('analysis-list');
+            listContainer.innerHTML = '<h2>Детальний аналіз:</h2>';
+            
+            if (userAnswers.length === 0) {
+                listContainer.innerHTML += '<p>Жодної відповіді не надано.</p>';
+                return;
+            }
+
+            userAnswers.forEach((ans, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `analysis-item ${ans.isCorrect ? 'correct' : 'incorrect'}`;
+                
+                let feedbackHtml = '';
+                if (ans.isCorrect) {
+                    feedbackHtml = `<span class="correct-text">✓ Правильно: Папка ${ans.correctFolder}</span>`;
+                } else {
+                    feedbackHtml = `
+                        <span class="incorrect-text">✗ Ваша відповідь: Папка ${ans.selectedFolder}</span>
+                        <span><strong>Правильно:</strong> ${ans.correctFolderName}</span>
+                    `;
+                }
+
+                itemDiv.innerHTML = `
+                    <div class="doc-name">${index + 1}. ${ans.document}</div>
+                    <div class="doc-feedback">${feedbackHtml}</div>
+                `;
+                listContainer.appendChild(itemDiv);
+            });
+
+            // Додаємо документи, на які не вистачило часу
+            if (userAnswers.length < rawDocuments.length) {
+                const missedTitle = document.createElement('h3');
+                missedTitle.innerText = 'Нерозподілені документи:';
+                missedTitle.style.marginTop = '20px';
+                listContainer.appendChild(missedTitle);
+
+                for (let i = currentDocIndex; i < gameDocuments.length; i++) {
+                    const doc = gameDocuments[i];
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = `analysis-item incorrect`;
+                    itemDiv.innerHTML = `
+                        <div class="doc-name">${i + 1}. ${doc.text}</div>
+                        <div class="doc-feedback">
+                            <span class="incorrect-text">✗ Не відсортовано (Час вийшов)</span>
+                            <span><strong>Правильно:</strong> ${doc.folderName}</span>
+                        </div>
+                    `;
+                    listContainer.appendChild(itemDiv);
+                }
+            }
+        }
+
+        // Перезапуск
+        function resetGame() {
+            showScreen('start-screen');
+        }
+    </script>
+</body>
+</html>
